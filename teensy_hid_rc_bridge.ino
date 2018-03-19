@@ -1,11 +1,30 @@
+#include <stdint.h>
+#include <SPI.h>
+
+void writeRCVals(uint8_t steering, uint8_t power);
+
+#define CS_STEERING 9
+#define CS_POWER 10
+
 void setup() {
   // DO NOT USE SERIAL FOR DEBUGGING! SIGNIFICANTLY REDUCES PROCESSING SPEED
+  //Setup SPI and the chip select pins
+  pinMode(CS_STEERING, OUTPUT);
+  digitalWrite(CS_STEERING, HIGH);
+  pinMode(CS_POWER, OUTPUT);
+  digitalWrite(CS_POWER, HIGH);
+  SPI.setSCK(14);
+  SPI.begin();
+
+  //Setup the LED to be used for debugging
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
 // Must always transfer 64 bytes, since HID is used
 byte buffer[64];
+uint8_t toggle = 0;
+
 //elapsedMillis timeout
 void loop() {
   int n;
@@ -13,19 +32,20 @@ void loop() {
 
   //Received a new packet!
   if (n > 0) {
-    // Quick debug output to show that it's working
-    if (buffer[0] > 64) {
-      digitalWrite(LED_BUILTIN, HIGH);
-    } else {
-      digitalWrite(LED_BUILTIN, LOW);
-    }
-
-    //Send the message back to ack
-    buffer[2] = 0xDE;
-    buffer[3] = 0xAD;
-    buffer[4] = 0xBE;
-    buffer[5] = 0xEF;
-    n = RawHID.send(buffer, 100);
+    writeRCVals(buffer[0], buffer[1]);
+    //Toggle the LED state to show that a packet was received
+    digitalWrite(LED_BUILTIN, toggle);
+    toggle ^= 1;
   }
+}
 
+void writeRCVals(uint8_t steering, uint8_t power) {
+  digitalWrite(CS_STEERING, LOW);
+  SPI.transfer(0);
+  SPI.transfer(steering);
+  digitalWrite(CS_STEERING, HIGH);
+  digitalWrite(CS_POWER, LOW);
+  SPI.transfer(0);
+  SPI.transfer(power);
+  digitalWrite(CS_POWER, HIGH);
 }
