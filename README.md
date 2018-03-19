@@ -13,4 +13,4 @@ throttle inputs on the RC controller to send commands to the RC car.
 NOTE: There is no safety code in here yet at all.  Nothing is preventing
 the car from running away.
 
-![Breadboard][docs/breadboard.jpg]
+![Breadboard](docs/breadboard.jpg)
